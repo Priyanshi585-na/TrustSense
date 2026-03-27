@@ -21,8 +21,16 @@ for id in youtube_ids:
     published_date = response['items'][0]['snippet']['publishedAt'].split('T')[0]
     author = response['items'][0]['snippet']['channelTitle']
 
+    channel_id = response['items'][0]["snippet"]["channelId"]
+
     language = transcript.language_code
 
+    channel_response = youtube.channels().list(part = 'snippet', id = channel_id).execute()
+    try:
+       region = channel_response['items'][0]['snippet']['country']
+
+    except:
+        region = None
 
     topic_tags = tagging(text)
     content_chunks = chunking(text)
@@ -34,7 +42,7 @@ for id in youtube_ids:
      "author": author, 
      "published_date": published_date, 
      "language": language, 
-    #  "region": region, 
+     "region": region, 
      "topic_tags": topic_tags, 
      "trust_score": "", 
      "content_chunks": content_chunks
