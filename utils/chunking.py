@@ -1,7 +1,7 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def chunking(text):
-    splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap = 80, separators=["\n\n", "\n", ".", "?", "!", " "])
+    splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap = 50)
     text = text.replace("\u200b","")
     content_chunks = []
     paragraphs = splitter.split_text(text)

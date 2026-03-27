@@ -63,37 +63,3 @@ for url in blog_urls:
     
 
 
-
-"""   requests + BeautifulSoup — for scraping blog posts and PubMed (simple HTML parsing)
-Selenium or Playwright — if blogs have JavaScript-rendered content
-youtube-transcript-api — to pull YouTube transcripts without the YouTube API
-google-api-python-client — for YouTube metadata (channel name, publish date, description)
-Bio.Entrez (Biopython) — the standard library for fetching PubMed articles programmatically
-
-Topic Tagging
-
-KeyBERT — best choice; extracts meaningful keyword tags using BERT embeddings
-spaCy — for NLP preprocessing (tokenization, NER) if you want lightweight tagging
-langdetect — to auto-detect language of content
-
-Trust Scoring
-
-whois / requests to Moz/Ahrefs API — for domain authority (Moz has a free tier)
-Plain Python logic is fine for the scoring formula — no special library needed
-datetime — for recency calculation
-
-Content Chunking
-
-LangChain's RecursiveCharacterTextSplitter — cleanest option for splitting long text into chunks
-Or simple manual splitting by paragraph using Python string operations
-
-Data Storage
-
-Python's built-in json module — sufficient for saving structured output
-pandas — optional, useful if you want to inspect/export data as CSV too
-
-Project Structure & Dev
-
-python-dotenv — for storing API keys securely
-logging module — for tracking scraping errors gracefully
-     """
