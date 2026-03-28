@@ -4,6 +4,7 @@ from utils.chunking import chunking
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 
 load_dotenv()
@@ -11,39 +12,69 @@ ytt_api = YouTubeTranscriptApi()
 api_key = os.getenv('key')
 youtube = build("youtube", "v3", developerKey=api_key)
 
+channel_ids = []
+data = []
+
+
+
+def process_video(youtube_response):
+    for item in youtube_response['items']:
+        results = {}
+        vid_id = item['id']
+        results["source_url"] = f"https://www.youtube.com/watch?v={vid_id}"
+        results["source_type"] = "youtube"
+        results["author"] = item['snippet']['channelTitle']
+        results["published_date"] = item['snippet']['publishedAt'].split('T')[0]
+        channel_ids.append(item["snippet"]["channelId"])
+        results['channel_id'] = item['snippet']['channelId']
+        results["language"] = item['snippet'].get('defaultAudioLanguage', "Unknown")
+
+        text = transcript_map.get(vid_id, "")
+
+        if(item['snippet']['tags']):
+            results["topic_tags"] = item['snippet']['tags']
+        else:
+            results["topic_tags"] = tagging(text)
+
+        results["content_chunks"] = chunking(text)
+
+        data.append(results)
+
+
+def process_channel(cids):
+    response = youtube.channels().list(part = "snippet", id = cids).execute()
+    channel_map = {}
+    for item in response['items']:
+          channel_map[item['id']] = item['snippet'].get('country', "Unknown")
+            
+    for i in range(len(data)):
+        cid = data[i]["channel_id"]
+        data[i]["region"] = channel_map.get(cid, "Unknown")
+        data[i].pop("channel_id")
+
+
+
+def fetch_transcript(vid_id):
+        transcript = ytt_api.fetch(vid_id)
+        text = " ".join(s.text.strip() for s in transcript)
+        return text
+
+
 youtube_ids = ["oBklltKXtDE","UabBYexBD4k"]
 
-for id in youtube_ids:
-    transcript = ytt_api.fetch(id)
-    text = " ".join(snippet.text.strip() for snippet in transcript)
+with ThreadPoolExecutor(max_workers=3) as executor:
+     transcripts = list(executor.map(fetch_transcript, youtube_ids))
 
-    response = youtube.videos().list(part="snippet", id = id).execute()
-    published_date = response['items'][0]['snippet']['publishedAt'].split('T')[0]
-    author = response['items'][0]['snippet']['channelTitle']
+transcript_map = dict(zip(youtube_ids, transcripts))
 
-    channel_id = response['items'][0]["snippet"]["channelId"]
 
-    language = transcript.language_code
+ids = ",".join(youtube_ids)
+youtube_response = youtube.videos().list(part = "snippet", id = ids).execute()
 
-    channel_response = youtube.channels().list(part = 'snippet', id = channel_id).execute()
-    try:
-       region = channel_response['items'][0]['snippet']['country']
+process_video(youtube_response)
 
-    except:
-        region = None
+cids = ",".join(channel_ids)
+process_channel(cids)
 
-    topic_tags = tagging(text)
-    content_chunks = chunking(text)
+print(data)
 
-    
-    print({ 
-     "source_url": f"https://www.youtube.com/watch?v={id}", 
-     "source_type": "youtube", 
-     "author": author, 
-     "published_date": published_date, 
-     "language": language, 
-     "region": region, 
-     "topic_tags": topic_tags, 
-     "trust_score": "", 
-     "content_chunks": content_chunks
-     } )
