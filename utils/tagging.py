@@ -1,7 +1,11 @@
 from keybert import KeyBERT
 from sentence_transformers import SentenceTransformer
+import joblib
 
-model = KeyBERT(SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2"))
+# model = KeyBERT(SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2"))
+# joblib.dump(model, 'artifacts/keybert.pkl')
+
+model = joblib.load('artifacts/keybert.pkl')
 
 def tagging(text):
     keywords = []
