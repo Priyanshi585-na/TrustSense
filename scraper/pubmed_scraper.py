@@ -1,5 +1,6 @@
 from Bio import Entrez
 from dotenv import load_dotenv
+import datetime
 import os
 from utils.chunking import chunking
 from utils.tagging import tagging
@@ -39,7 +40,11 @@ year  = date["Year"]
 month = date["Month"]
 day   = date["Day"]
 
-published_date = f"{year}-{month}-{day}"
+month_obj = datetime.strptime(month, "%b")
+month_num = month_obj.strftime("%m")
+
+
+published_date = f"{year}-{month_num}-{day}"
 
 abstract = str(article['Abstract']['AbstractText'][0])
 content_chunks = chunking(abstract)
@@ -61,6 +66,7 @@ except:
 
 data = { 
      "source_url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/", 
+     "pmid" : pmid,
      "source_type": "pubmed", 
      "author": author, 
      "affiliations" : affiliations,
