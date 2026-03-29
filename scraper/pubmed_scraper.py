@@ -1,10 +1,11 @@
 from Bio import Entrez
 from dotenv import load_dotenv
-import datetime
+from datetime import datetime
 import os
 from utils.chunking import chunking
 from utils.tagging import tagging
 from scoring.trust_score import TrustScore
+import json
 
 load_dotenv()
 email = os.getenv("email")
@@ -49,7 +50,7 @@ published_date = f"{year}-{month_num}-{day}"
 abstract = str(article['Abstract']['AbstractText'][0])
 content_chunks = chunking(abstract)
 
-language = str(article.get("Language"[0], "Unknown"))
+language = str(article.get("Language", ["Unknown"])[0])
 
 try:
     region = records['PubmedArticle'][0]['MedlineCitation']['Country']
@@ -74,12 +75,21 @@ data = {
      "language": language, 
      "region": region, 
      "topic_tags": topic_tags, 
-     "trust_score": "", 
      "content_chunks": content_chunks
      }
 
-# print(data)
 
-score = TrustScore(data)
-a_score = score.author_credibility()
-print(a_score)
+trustscore = TrustScore(data)
+score = trustscore.trust_score()
+
+data['trust_score'] = score
+data.pop('affiliations')
+data.pop('pmid')
+
+
+with open('output/scraped_data.json','r', encoding='utf-8') as file:
+     all_data = json.load(file)
+
+all_data.extend([data])
+with open('output/scraped_data.json','w', encoding='utf-8') as file:
+     json.dump(all_data,file, indent=4, ensure_ascii=False)

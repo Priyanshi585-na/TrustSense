@@ -5,12 +5,15 @@ from utils.tagging import tagging
 from utils.chunking import chunking
 from langdetect import detect
 from urllib.parse import urlparse
+from scoring.trust_score import TrustScore
 
 
 blog_urls = ["https://jamesclear.com/3-2-1/march-5-2026","https://krebsonsecurity.com/2026/03/canisterworm-springs-wiper-attack-targeting-iran/","https://www.jansatta.com/photos/picture-gallery/world-richest-countries-powered-by-natural-resources/4461414/"]
 
 
 months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+all_data = []
+
 
 for url in blog_urls:
     article = trafilatura.fetch_url(url)
@@ -48,8 +51,7 @@ for url in blog_urls:
     topic_tags = tagging(raw_text)
     content_chunks = chunking(raw_text)
 
-    
-    print({ 
+    data = { 
      "source_url": url, 
      "source_type": "blog", 
      "author": author, 
@@ -57,9 +59,15 @@ for url in blog_urls:
      "language": language, 
      "region": region, 
      "topic_tags": topic_tags, 
-     "trust_score": "", 
      "content_chunks": content_chunks
-     } )
+     } 
     
+    score = TrustScore(data)
+    trust_score = score.trust_score()
 
+    data['trust_score'] = trust_score
 
+    all_data.append(data)
+    
+with open('output/scraped_data.json' , "w", encoding='utf-8') as file:
+    json.dump(all_data,file, ensure_ascii=False, indent = 4)
