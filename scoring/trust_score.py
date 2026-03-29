@@ -1,6 +1,6 @@
 import requests
 import numpy as np
-from functools import lru_cache
+from datetime import datetime, year
 
 
 class TrustScore:
@@ -57,8 +57,12 @@ class TrustScore:
 
                     works_count = author.get("works_count", 0)
                     cite_count = author.get("cited_by_count", 0)
+                    try:
+                        h_index = author['summary_stats']['h_index']
+                    except:
+                        h_index = 0
 
-                    score = 0.3*np.log1p(works_count) + 0.7*np.log1p(cite_count)
+                    score = 0.3*np.log1p(works_count) + 0.5*np.log1p(cite_count) + 0.2*np.log1p(h_index)
                     scores.append(score)
 
                 except:
@@ -75,5 +79,37 @@ class TrustScore:
         else:
             pass
 
+    def citation_count(self):
+        if (self.data['source_type'] == 'pubmed'):
+            try:
+                pmid = self.data['pmid']
+                res = requests.get(f"https://api.openalex.org/works?filter=ids.pmid:{pmid}").json()
+                cites = res["results"][0].get("cited_by_count", 0)
+                score = np.log1p(cites)
+                return min(score / 10, 1)
+
+            except:
+                return 0.3
+            
+        else:
+            pass
+
+
+    def recency(self):
+        try:
+            published_date = self.data['published_date']
+            pub_year = datetime.strptime(published_date, '%Y-%m-%d').year
+            years_old =  year.today() - pub_year
+
+            if years_old <= 3:
+                return 1
+            elif years_old <= 10:
+                return 0.7
+            elif years_old <= 15:
+                return 0
+            else:
+                return -5
+        except:
+            return -10
+        
     
-    # def citation_count(self):
