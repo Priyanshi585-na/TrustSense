@@ -71,3 +71,9 @@ class TrustScore:
             author_score = float(min(avg_score / 15, 1))
             aff_score = self.affiliation_score()
             return 0.3*aff_score + 0.7*author_score
+        
+        else:
+            pass
+
+    
+    # def citation_count(self):
